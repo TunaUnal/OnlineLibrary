@@ -1,0 +1,28 @@
+// src/components/Star.jsx
+import React from 'react';
+import { useStarToggler } from '../hooks/useStarToggler'; // Henüz yazmadığın ama yazacağın hook
+
+// Kendi ikonlarını kullanabilirsin
+const StarFilled = () => <span>★</span>;
+const StarOutline = () => <span>☆</span>;
+const Spinner = () => <span className="spinner"></span>;
+
+export const Star = ({ itemId, isStarred }) => {
+  const { toggleStar, isLoading } = useStarToggler();
+
+  const handleClick = (e) => {
+    // Event'in bir üst elemente (mesela klasöre tıklama) yayılmasını engellemek önemli!
+    e.stopPropagation();
+    toggleStar(itemId);
+  };
+
+  if (isLoading) {
+    return <Spinner />;
+  }
+
+  return (
+    <span onClick={handleClick} className="star-icon" title="Yıldızla">
+      {isStarred ? <StarFilled /> : <StarOutline />}
+    </span>
+  );
+};

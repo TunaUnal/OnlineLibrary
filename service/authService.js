@@ -1,7 +1,7 @@
 import dotenv from "dotenv/config.js";
 import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
-export const login = async (username, password) => {
+const login = async (username, password) => {
   if (!username || !password) {
     const error = new Error("Kullanıcı adı ve şifre gereklidir.");
     error.status = 400;
@@ -16,9 +16,13 @@ export const login = async (username, password) => {
   }
   console.log(`${username} giriş yaptı.`);
 
-  const token = jwt.sign({ username }, process.env.JWT_SECRET, {
-    expiresIn: "1h",
-  });
+  const token = jwt.sign(
+    { id: user.id, username: user.username },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "1h",
+    }
+  );
 
   const payload = {
     id: user.id,
@@ -31,7 +35,9 @@ export const login = async (username, password) => {
 
   return payload;
 };
-export const logout = (username) => {
+const logout = (username) => {
   console.log(`${username} çıkış yaptı.`);
   return true;
 };
+
+export default { login, logout };

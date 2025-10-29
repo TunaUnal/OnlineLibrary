@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
-
-const authenticate = (req, res, next) => {
+import dotenv from "dotenv/config.js";
+import User from "../models/userModel.js";
+const authenticate = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
   if (!authHeader)
     return res
@@ -13,13 +14,33 @@ const authenticate = (req, res, next) => {
       .status(401)
       .json({ message: "Bu işlem için giriş yapmalısınız" });
 
-  jwt.verify(token, "SECRET_KEY", (err) => {
+  jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
     if (err)
       return res
         .status(403)
         .json({ message: "Bu işlem için giriş yapmalısınız" });
+
+    const user = await User.findByPk(decoded.id, {
+      attributes: { exclude: ["password"] },
+    });
+    if (!user)
+      return res
+        .status(403)
+        .json({ message: "Bu işlem için giriş yapmalısınız" });
+
+    req.user = user;
     next();
   });
 };
 
-export { authenticate };
+const authorize = (roles = []) => {
+  return (req, res, next) => {
+    console.log("User Role:", req.user.role);
+    console.log("Allowed Roles:", roles);
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Bu işlem için yetkiniz yok" });
+    }
+    next();
+  };
+};
+export { authenticate, authorize };

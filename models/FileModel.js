@@ -1,8 +1,8 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/db.js";
 
-const Files = sequelize.define(
-  "Files",
+const File = sequelize.define(
+  "File",
   {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     fileUrl: { type: DataTypes.STRING(255), allowNull: false },
@@ -22,4 +22,4 @@ const Files = sequelize.define(
   }
 );
 
-export default Files;
+export default File;

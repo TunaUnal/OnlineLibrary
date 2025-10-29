@@ -1,0 +1,423 @@
+// src/store/fileSlice.js
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import {
+  getFilesAPI,
+  getCategoriesAPI,
+  uploadFileAPI,
+  getMyFilesAPI,
+  downloadFileAPI,
+  starCategoryAPI,
+  changeFileStatusAPI,
+} from './api';
+
+export const getFiles = createAsyncThunk('files/fetch', async (id, { rejectWithValue }) => {
+  try {
+    const response = await getFilesAPI(id);
+
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      return rejectWithValue(error.response.data);
+    } else {
+      return rejectWithValue({ message: 'Beklenmedik bir ağ hatası oluştu.' });
+    }
+  }
+});
+
+export const getFilesByFilter = createAsyncThunk(
+  'files/fetchFiltered',
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await getFilesAPI(data);
+
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        return rejectWithValue(error.response.data);
+      } else {
+        return rejectWithValue({ message: 'Beklenmedik bir ağ hatası oluştu.' });
+      }
+    }
+  }
+);
+
+export const getCategories = createAsyncThunk(
+  'categories/fetch',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await getCategoriesAPI();
+
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        return rejectWithValue(error.response.data);
+      } else {
+        return rejectWithValue({ message: 'Beklenmedik bir ağ hatası oluştu.' });
+      }
+    }
+  }
+);
+
+export const uploadFile = createAsyncThunk('file/upload', async (formdata, { rejectWithValue }) => {
+  try {
+    const response = await uploadFileAPI(formdata);
+
+    if (response.data.success) {
+      return response.data;
+    } else {
+      return rejectWithValue(response.data);
+    }
+  } catch (error) {
+    if (error.response && error.response.data) {
+      return rejectWithValue(error.response.data);
+    } else {
+      return rejectWithValue({ message: 'Beklenmedik bir ağ hatası oluştu.' });
+    }
+  }
+});
+
+export const getMyFiles = createAsyncThunk('myFiles/fetch', async (_, { rejectWithValue }) => {
+  try {
+    const response = await getMyFilesAPI();
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      return rejectWithValue(error.response.data);
+    } else {
+      return rejectWithValue({ message: 'Beklenmedik bir ağ hatası oluştu.' });
+    }
+  }
+});
+
+export const downloadFile = createAsyncThunk('file/download', async (id, { rejectWithValue }) => {
+  // id'yi doğrudan alabiliriz, obje içinde değil.
+  try {
+    // 1. Düzeltilmiş API fonksiyonunu çağırıyoruz.
+    const response = await downloadFileAPI(id);
+
+    // 2. Yanıttan dosya adını alıyoruz (PHP'den gelen Content-Disposition başlığından).
+    const headerLine = response.headers['content-disposition'];
+    let filename = 'indirilen-dosya'; // Varsayılan ad
+    if (headerLine) {
+      const filenameMatch = headerLine.match(/filename="(.+)"/i);
+      if (filenameMatch && filenameMatch.length > 1) {
+        filename = filenameMatch[1];
+      }
+    }
+
+    // 3. İndirme işlemini burada tetikliyoruz.
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+
+    // 4. Oluşturulan nesneleri temizliyoruz.
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    // 5. Reducer'a başarılı olduğunu bildirmek için dosya adını dönüyoruz.
+    return { filename };
+  } catch (error) {
+    // Axios hatası durumunda, blob olan hata yanıtını metne çevirip
+    // içindeki hata mesajını yakalamaya çalışabiliriz.
+    if (error.response && error.response.data) {
+      // Blob hatasını metne çevir
+      const errorText = await error.response.data.text();
+      return rejectWithValue({ message: errorText || 'Dosya indirilemedi.' });
+    } else {
+      return rejectWithValue({ message: 'Beklenmedik bir ağ hatası oluştu.' });
+    }
+  }
+});
+
+export const starCategory = createAsyncThunk('category/star', async (id, { rejectWithValue }) => {
+  try {
+    const response = await starCategoryAPI(id);
+
+    if (response.data.success) {
+      return response.data;
+    } else {
+      return rejectWithValue(response.data);
+    }
+  } catch (error) {
+    if (error.response && error.response.data) {
+      return rejectWithValue(error.response.data);
+    } else {
+      return rejectWithValue({ message: 'Beklenmedik bir ağ hatası oluştu.' });
+    }
+  }
+});
+
+export const getCategoryRequests = createAsyncThunk('categoryRequest/fetch', async () => {
+  const res = await axios.post(
+    'http://localhost/server2/api/index.php',
+    { type: 'getCategoryRequest' },
+    {
+      withCredentials: true,
+    }
+  );
+  return res.data;
+});
+
+export const getAllFiles = createAsyncThunk('allfiles/fetch', async () => {
+  const res = await axios.post(
+    'http://localhost/server2/api/index.php',
+    { type: 'getAllFiles' },
+    {
+      withCredentials: true,
+    }
+  );
+  return res.data;
+});
+
+export const changeFileStatus = createAsyncThunk(
+  'files/changeStatus',
+  async ({ id, status }, { rejectWithValue }) => {
+    try {
+      console.log('id');
+      console.log(id);
+      console.log(status);
+      const res = await changeFileStatusAPI(id, status);
+      if (!res.data.success) {
+        return rejectWithValue(res.data.message || 'Dosya durumu değiştirilemedi.');
+      }
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const updateFile = createAsyncThunk('files/updateFile', async (payload, thunkAPI) => {
+  try {
+    const allowed = ['id', 'status', 'filename', 'description', 'category_id'];
+    const data = Object.fromEntries(Object.entries(payload).filter(([k]) => allowed.includes(k)));
+    const formData = new FormData();
+    Object.entries(data).forEach(([k, v]) => formData.append(k, v));
+    formData.append('type', 'updateFile');
+
+    const res = await axios.post('http://localhost/server2/api/index.php', formData, {
+      withCredentials: true,
+    });
+
+    if (!res.data.success) {
+      return thunkAPI.rejectWithValue(res.data.message);
+    }
+    return data; // id ve değişen alanları dön
+  } catch (err) {
+    return thunkAPI.rejectWithValue(err.message);
+  }
+});
+export const createCategories = createAsyncThunk(
+  'categories/create',
+  async ({ parentId, name }, { rejectWithValue }) => {
+    try {
+      const res = await axios.post(
+        'http://localhost/server2/api/index.php',
+        { type: 'createCategory', parent_id: parentId, name },
+        { withCredentials: true }
+      );
+
+      if (!res.data.success) {
+        return rejectWithValue(res.data.message || 'Kategori eklenemedi');
+      }
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const createCategoryRequest = createAsyncThunk(
+  'categories/request',
+  async ({ parentId, name }, { rejectWithValue }) => {
+    try {
+      const res = await axios.post(
+        'http://localhost/server2/api/index.php',
+        { type: 'createCategoryRequest', parent_id: parentId, name },
+        { withCredentials: true }
+      );
+
+      if (!res.data.success) {
+        return rejectWithValue(res.data.message || 'Kategori talebi alınamadı.');
+      }
+      console.log(res.data);
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+const FileSlice = createSlice({
+  name: 'files',
+  initialState: {
+    loading: false,
+    files: [],
+    categories: [],
+    isSubmitting: false,
+    myFiles: [],
+    loadingMyFiles: false,
+    error: null,
+    selectedFile: null,
+    filteredFiles: [],
+    pagination: {
+      total: 0,
+      page: 1,
+      limit: 50,
+      totalPages: 1,
+    },
+
+    errors: {
+      uploadError: null,
+      downloadError: null,
+      fetchError: null,
+      fetchCategoriesError: null,
+      fetchMyFilesError: null,
+      starCategoryError: null,
+      getFilesByFilterError: null,
+    },
+    status: {
+      downloadingFile: null,
+      uploadingFile: null,
+      fetchingFiles: null,
+      fetchingCategories: null,
+      fetchingMyFiles: null,
+      starringCategory: null,
+      gettingFilesByFilter: null,
+    },
+
+    loadings: {
+      downloadingFile: null,
+      uploadingFile: null,
+      fetchingFiles: null,
+      fetchingCategories: null,
+      fetchingMyFiles: null,
+      starringCategory: null,
+      gettingFilesByFilter: null,
+    },
+  },
+  reducers: {
+    clearError: (state, action) => {
+      const errorKey = action.payload; // 'fetchFiles', 'downloadFile' etc.
+      if (state.errors[errorKey]) {
+        state.errors[errorKey] = null;
+        // İlgili status'u da 'idle' a çekebilirsiniz
+      }
+    },
+    clearFilteredFiles: (state) => {
+      state.filteredFiles = [];
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(getFiles.fulfilled, (state, action) => {
+        state.error = null;
+        state.files = action.payload.data;
+      })
+      .addCase(getFiles.rejected, (state, action) => {
+        state.error = action.error.message;
+      });
+
+    builder
+      .addCase(getFilesByFilter.pending, (state) => {
+        state.status.fetchingFilteredFiles = 'loading';
+        state.errors.fetchFilteredFiles = null;
+      })
+      .addCase(getFilesByFilter.fulfilled, (state, action) => {
+        state.status.fetchingFilteredFiles = 'succeeded';
+        // API'den gelen veriyi doğru yerlere yaz.
+        state.filteredFiles = action.payload.data;
+        state.pagination = action.payload.pagination;
+      })
+      .addCase(getFilesByFilter.rejected, (state, action) => {
+        state.status.fetchingFilteredFiles = 'failed';
+        state.errors.fetchFilteredFiles = action.payload;
+        state.filteredFiles = []; // Hata durumunda listeyi boşalt
+        state.pagination.total = 0; // Sayfalamayı sıfırla
+      });
+
+    builder
+      .addCase(getCategories.fulfilled, (state, action) => {
+        state.categories = action.payload.data;
+        state.error = null;
+        state.loading = false;
+      })
+      .addCase(getCategories.pending, (state, action) => {
+        state.loading = true;
+      })
+      .addCase(getCategories.rejected, (state, action) => {
+        state.error = action.error.message;
+        state.loading = false;
+      });
+    builder
+      .addCase(uploadFile.fulfilled, (state, action) => {
+        state.isSubmitting = true;
+        state.error = null;
+        state.loading = false;
+      })
+      .addCase(uploadFile.pending, (state, action) => {
+        state.loading = true;
+      })
+      .addCase(uploadFile.rejected, (state, action) => {
+        state.error = action.error.message;
+        state.loading = false;
+        state.isSubmitting = false;
+      });
+    builder
+      .addCase(downloadFile.pending, (state) => {
+        state.isSubmitting = true; // veya loading gibi bir state
+        state.errors.downloadError = null;
+      })
+      .addCase(downloadFile.fulfilled, (state, action) => {
+        state.isSubmitting = false;
+        state.errors.downloadError = null;
+        console.log(`${action.payload.filename} başarıyla indirildi.`);
+        // State'e dosyanın kendisini KAYDETMİYORUZ.
+        // İsterseniz burada bir "başarılı" bildirimi (toast) gösterebilirsiniz.
+      })
+      .addCase(downloadFile.rejected, (state, action) => {
+        state.isSubmitting = false;
+        state.errors.downloadError =
+          action.payload.message || 'Dosya indirilirken bir hata oluştu.';
+      });
+
+    builder
+      .addCase(starCategory.pending, (state) => {
+        state.isSubmitting = true;
+        state.errors.starCategoryError = null;
+      })
+      .addCase(starCategory.fulfilled, (state, action) => {
+        state.isSubmitting = false;
+        state.errors.starCategoryError = null;
+        // State'e dosyanın kendisini KAYDETMİYORUZ.
+        // İsterseniz burada bir "başarılı" bildirimi (toast) gösterebilirsiniz.
+      })
+      .addCase(starCategory.rejected, (state, action) => {
+        state.isSubmitting = false;
+        state.errors.starCategoryError =
+          action.payload.message || 'Dosya indirilirken bir hata oluştu.';
+      });
+
+    builder
+      .addCase(getMyFiles.fulfilled, (state, action) => {
+        state.error = null;
+        state.loadingMyFiles = false;
+        state.myFiles = action.payload.data;
+        state.isSubmitting = false;
+      })
+      .addCase(getMyFiles.pending, (state, action) => {
+        state.loadingMyFiles = true;
+      })
+      .addCase(getMyFiles.rejected, (state, action) => {
+        state.error = action.error.message;
+        state.loadingMyFiles = false;
+        state.isSubmitting = false;
+      });
+  },
+});
+
+export default FileSlice.reducer;
+export const { clearError, clearFilteredFiles } = FileSlice.actions;

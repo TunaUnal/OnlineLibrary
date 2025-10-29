@@ -1,0 +1,244 @@
+/* ========================================= */
+/* TEMEL STİLLER (ÖNCE MOBİL - MOBILE FIRST)  */
+/* ========================================= */
+:root {
+    --header-height: 60px;
+    user-select: none;
+}
+
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f0f2f5;
+    /* Sabit header (60px) için üstten boşluk */
+    margin-top: 60px;
+
+    /* DİNAMİK */
+}
+
+a {
+    color: #0d6efd;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #0a58ca;
+}
+
+/* Header her zaman sabit */
+.header {
+    height: 60px;
+    box-shadow: 0px 2px 20px rgba(1, 41, 112, 0.1);
+    background-color: #ffffff;
+    padding-left: 20px;
+    z-index: 1040;
+    /* offcanvas'tan daha düşük bir z-index */
+}
+
+.header .logo span {
+    font-size: 24px;
+    font-weight: 700;
+    color: #012970;
+}
+
+.toggle-sidebar-btn {
+    font-size: 32px;
+    cursor: pointer;
+    color: #012970;
+}
+
+/* Profil menüsü için */
+.header-nav .nav-profile img {
+    max-height: 36px;
+}
+
+.dropdown-menu.profile {
+    border-radius: 4px;
+    box-shadow: 0px 0px 30px rgba(1, 41, 112, 0.1);
+}
+
+
+/* Ana İçerik Alanı - Mobilde soldan boşluk yok */
+main#main {
+    margin-top: 60px;
+    padding: 20px 15px;
+    transition: all 0.3s;
+}
+
+/* Sidebar - Bu stiller hem mobil offcanvas hem de desktop için ortak */
+.sidebar {
+    background-color: #fff;
+    box-shadow: 0px 0px 20px rgba(1, 41, 112, 0.1);
+    padding: 20px;
+}
+
+.sidebar-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-nav .nav-link {
+    display: flex;
+    align-items: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: #4154f1;
+    background: #f6f9ff;
+    border-radius: 4px;
+    padding: 10px 15px;
+    margin-bottom: 5px;
+    transition: 0.3s;
+}
+
+.sidebar-nav .nav-link:hover {
+    color: #4154f1;
+    background: #f6f9ff;
+}
+
+.sidebar-nav .nav-link i {
+    font-size: 16px;
+    margin-right: 10px;
+}
+
+.sidebar-nav .nav-link.collapsed {
+    color: #012970;
+    background: #fff;
+}
+
+.sidebar-nav .nav-link.collapsed:hover {
+    color: #4154f1;
+    background: #f6f9ff;
+}
+
+.sidebar-nav .nav-link.collapsed i {
+    color: #899bbd;
+}
+
+.sidebar-nav .nav-content {
+    list-style: none;
+    padding-left: 20px;
+}
+
+.sidebar-nav .nav-content a {
+    padding: 10px 0 10px 20px;
+    color: #012970;
+    font-size: 14px;
+}
+
+.sidebar-nav .nav-content a:hover,
+.sidebar-nav .nav-content a.active {
+    color: #4154f1;
+}
+
+.sidebar-nav .nav-content i {
+    font-size: 6px;
+    margin-right: 8px;
+}
+
+/* Menü başlıkları */
+.nav-heading {
+    font-size: 12px;
+    font-weight: 700;
+    color: #899bbd;
+    text-transform: uppercase;
+    padding: 10px 15px;
+}
+
+/* Footer */
+.footer {
+    padding: 20px 15px;
+    font-size: 14px;
+    background-color: #f0f2f5;
+    color: #012970;
+}
+
+/* ========================================================= */
+/* SADECE BÜYÜK EKRAN STİLLERİ (DESKTOP) - LG Breakpoint ve üzeri */
+/* ========================================================= */
+
+@media (min-width: 992px) {
+
+    /* Büyük ekranda, sidebar'ı sabit bir sütun haline getiriyoruz */
+    .sidebar {
+        position: fixed;
+        top: 60px;
+        /* Header'ın altında */
+        left: 0;
+        bottom: 0;
+        width: 300px;
+        z-index: 996;
+        overflow-y: auto;
+    }
+
+    /* Büyük ekranda, sidebar gizlenemez hale gelir. offcanvas davranışını iptal eder. */
+    .offcanvas-lg.offcanvas-start {
+        transform: none !important;
+    }
+
+    /* Mobilde sidebar'ı açan ikonu büyük ekranda gizle */
+    .toggle-sidebar-btn {
+        display: none !important;
+    }
+
+    /* Sabit sidebar genişliği (300px) kadar ana içeriği ve footer'ı sağa kaydır */
+    main#main,
+    footer#footer {
+        margin-left: 300px;
+        padding: 20px 30px;
+    }
+}
+
+
+.main,
+.sidebar {
+    transition: margin-top 0.4s ease, top 0.4s ease;
+}
+
+
+.card-info {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    padding: 16px;
+    text-align: left;
+}
+
+.card-info-header {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+.card-info-header span {
+    color: #2a68ff;
+    font-weight: 600;
+}
+
+.icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f0f5ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.icon i {
+    width: 24px;
+    height: 24px;
+    stroke: #2a68ff;
+}
+
+.value {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.increase {
+    color: #28a745;
+    font-size: 14px;
+}
