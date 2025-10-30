@@ -8,6 +8,7 @@ import {
   downloadFileAPI,
   starCategoryAPI,
   changeFileStatusAPI,
+  getPendingFilesAPI,
 } from './api';
 
 export const getFiles = createAsyncThunk('files/fetch', async (id, { rejectWithValue }) => {
@@ -62,11 +63,7 @@ export const uploadFile = createAsyncThunk('file/upload', async (formdata, { rej
   try {
     const response = await uploadFileAPI(formdata);
 
-    if (response.data.success) {
-      return response.data;
-    } else {
-      return rejectWithValue(response.data);
-    }
+    return response.data;
   } catch (error) {
     if (error.response && error.response.data) {
       return rejectWithValue(error.response.data);
@@ -90,44 +87,55 @@ export const getMyFiles = createAsyncThunk('myFiles/fetch', async (_, { rejectWi
 });
 
 export const downloadFile = createAsyncThunk('file/download', async (id, { rejectWithValue }) => {
-  // id'yi doğrudan alabiliriz, obje içinde değil.
   try {
-    // 1. Düzeltilmiş API fonksiyonunu çağırıyoruz.
     const response = await downloadFileAPI(id);
 
-    // 2. Yanıttan dosya adını alıyoruz (PHP'den gelen Content-Disposition başlığından).
-    const headerLine = response.headers['content-disposition'];
-    let filename = 'indirilen-dosya'; // Varsayılan ad
-    if (headerLine) {
-      const filenameMatch = headerLine.match(/filename="(.+)"/i);
+    // 1. Content-Disposition başlığını al
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'indirilen-dosya.pdf'; // Varsayılan ad
+
+    if (contentDisposition) {
+      // 2. DOĞRU REGEX: Modern "filename*" formatını ara
+      const filenameMatch = contentDisposition.match(/filename\*=UTF-8''(.+)/);
+
       if (filenameMatch && filenameMatch.length > 1) {
-        filename = filenameMatch[1];
+        // 3. Bulunan kodlanmış adı (%C5%9Eubat gibi) normal metne çevir
+        filename = decodeURIComponent(filenameMatch[1]);
+      } else {
+        // Yedek olarak, eski formatı da kontrol edebiliriz (çok gerek olmasa da)
+        const fallbackMatch = contentDisposition.match(/filename="(.+)"/i);
+        if (fallbackMatch && fallbackMatch.length > 1) {
+          filename = fallbackMatch[1];
+        }
       }
     }
-
-    // 3. İndirme işlemini burada tetikliyoruz.
-    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const url = window.URL.createObjectURL(response.data);
     const link = document.createElement('a');
     link.href = url;
+
+    // 5. Düzeltilmiş dosya adını ata
     link.setAttribute('download', filename);
+
     document.body.appendChild(link);
     link.click();
 
-    // 4. Oluşturulan nesneleri temizliyoruz.
+    // 6. Temizlik yap
     link.parentNode.removeChild(link);
     window.URL.revokeObjectURL(url);
 
-    // 5. Reducer'a başarılı olduğunu bildirmek için dosya adını dönüyoruz.
-    return { filename };
+    return { filename }; // Başarılı, reducer'a bilgi ver
   } catch (error) {
-    // Axios hatası durumunda, blob olan hata yanıtını metne çevirip
-    // içindeki hata mesajını yakalamaya çalışabiliriz.
+    // ... hata yönetimi kodunuz aynı kalabilir ...
     if (error.response && error.response.data) {
-      // Blob hatasını metne çevir
-      const errorText = await error.response.data.text();
-      return rejectWithValue({ message: errorText || 'Dosya indirilemedi.' });
+      try {
+        const errorText = await error.response.data.text();
+        const errorJson = JSON.parse(errorText);
+        return rejectWithValue({ message: errorJson.message || 'Dosya indirilemedi.' });
+      } catch (e) {
+        return rejectWithValue({ message: 'Dosya indirilemedi ve hata mesajı okunamadı.' });
+      }
     } else {
-      return rejectWithValue({ message: 'Beklenmedik bir ağ hatası oluştu.' });
+      return rejectWithValue({ message: 'Ağ hatası oluştu.' });
     }
   }
 });
@@ -176,13 +184,7 @@ export const changeFileStatus = createAsyncThunk(
   'files/changeStatus',
   async ({ id, status }, { rejectWithValue }) => {
     try {
-      console.log('id');
-      console.log(id);
-      console.log(status);
       const res = await changeFileStatusAPI(id, status);
-      if (!res.data.success) {
-        return rejectWithValue(res.data.message || 'Dosya durumu değiştirilemedi.');
-      }
       return res.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -251,6 +253,18 @@ export const createCategoryRequest = createAsyncThunk(
   }
 );
 
+export const getPendingFiles = createAsyncThunk(
+  'files/getPendingFiles',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await getPendingFilesAPI();
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
 const FileSlice = createSlice({
   name: 'files',
   initialState: {
@@ -263,6 +277,7 @@ const FileSlice = createSlice({
     error: null,
     selectedFile: null,
     filteredFiles: [],
+    pendingFiles: [],
     pagination: {
       total: 0,
       page: 1,
@@ -352,6 +367,19 @@ const FileSlice = createSlice({
         state.error = action.error.message;
         state.loading = false;
       });
+    builder.addCase(getPendingFiles.fulfilled, (state, action) => {
+      state.error = null;
+      state.loading = false;
+      state.pendingFiles = action.payload.data;
+    });
+    builder.addCase(getPendingFiles.pending, (state, action) => {
+      state.loading = true;
+    });
+    builder.addCase(getPendingFiles.rejected, (state, action) => {
+      state.error = action.error.message;
+      state.loading = false;
+    });
+
     builder
       .addCase(uploadFile.fulfilled, (state, action) => {
         state.isSubmitting = true;

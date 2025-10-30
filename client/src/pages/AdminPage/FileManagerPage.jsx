@@ -23,7 +23,9 @@ function FileManagerPage() {
           </nav>
         </div>
         <section className="section dashboard">
-          <FileManager />
+          <div className="row">
+            <FileManager />
+          </div>
         </section>
       </main>
       <Footer></Footer>

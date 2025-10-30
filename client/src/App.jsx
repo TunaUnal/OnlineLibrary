@@ -11,10 +11,14 @@ import StoragePage from './pages/StoragePage';
 import UploadPage from './pages/UploadPage';
 import MyFilesPage from './pages/MyFilesPage';
 import FileManagerPage from './pages/AdminPage/FileManagerPage';
-
+import { checkSession } from './store/UserSlice';
 function App() {
   const user = useSelector((store) => store.user);
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(checkSession());
+  }, [dispatch]);
 
   if (!user.status) {
     return <LoginPage></LoginPage>;

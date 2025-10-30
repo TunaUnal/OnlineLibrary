@@ -6,8 +6,6 @@ const apiClient = axios.create({
   withCredentials: true,
   headers: {
     Authorization: `Bearer ${JSON.parse(localStorage.getItem('user') || '{}')?.token || ''}`, // genelde "Bearer <token>" formatında
-
-    'Content-Type': 'application/json',
   },
 });
 
@@ -29,17 +27,19 @@ export const getMyFilesAPI = () => apiClient.get('/file/me');
 //! Tüm klasörleri getirir.
 export const getCategoriesAPI = () => apiClient.get('/category');
 
+//! Dashboard datalarını getirir.
+export const getDashboardDataAPI = () => apiClient.get('/main');
+
+//! Onay bekleyen dosyaları getirir.
+export const getPendingFilesAPI = () => apiClient.get('/file/pending');
+
 /**
  * Tüm klasörleri getirir.
  * @params {FormData} data - Yüklenecek dosya formdata'sı
  * @returns {Promise<object>}
  */
 export const uploadFileAPI = (formdata) => {
-  return apiClient.post('index.php', formdata, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  return apiClient.post('/file/upload', formdata);
 };
 
 /**
@@ -47,25 +47,15 @@ export const uploadFileAPI = (formdata) => {
  * @param {number} id - İndirilecek dosya id'si
  * @returns {Promise<object>} - Axios yanıt nesnesi (içinde blob data olacak)
  */
-export const downloadFileAPI = (id) => {
-  // Config objesini ikinci parametre olarak veriyoruz.
-  return apiClient.get(`download.php?id=${id}`, {
-    responseType: 'blob', // Yanıtın ham veri (blob) olduğunu belirtiyoruz.
+export const downloadFileAPI = (id) =>
+  apiClient.get(`/file/download/${id}`, {
+    // BU SATIR ÇOK ÖNEMLİ!
+    responseType: 'blob',
   });
-};
 
-/**
- * ID'si verilen dosyanın durumunu değiştirir (onayla, sil, yeniden onayla).
- * @param {number} id - Durumu değişecek dosya id'si
- * @returns {Promise<object>} - Axios yanıt nesnesi (içinde blob data olacak)
- * */
+//! Dosya durumunu değiştirmek için API çağrısı yapar.
 export const changeFileStatusAPI = (id, status) => {
-  // Config objesini ikinci parametre olarak veriyoruz.
-  return apiClient.post(`index.php`, {
-    id: id,
-    type: 'changeFileStatus',
-    status: status,
-  });
+  return apiClient.put(`/file/${id}/status`, { status });
 };
 
 /**

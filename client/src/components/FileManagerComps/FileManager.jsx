@@ -20,8 +20,6 @@ function FileManager() {
   const isLoading = status.fetchingFilteredFiles === 'loading';
   const error = errors.fetchFilteredFiles;
 
-  // Component'in local state'leri:
-  // 1. Filtreler için ayrı bir state
   const [filters, setFilters] = useState({});
   // 2. Tablonun pagination'ı için ayrı bir state (pageIndex, pageSize formatında)
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });

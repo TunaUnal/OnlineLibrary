@@ -1,27 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { changeFileStatus, getAllFiles, getFilesByFilter } from '../../store/FileSlice';
+import { changeFileStatus, getPendingFiles } from '../../store/FileSlice';
 import Swal from 'sweetalert2';
-import axios from 'axios';
 import DataTable from './DataTable';
 import EditFileModal from '../EditFileModal';
 import { setText } from '../../Utils/SwalAlert';
-import DownloadButton from '../../Utils/DownloadButton';
-import { clearFilteredFiles } from '../../store/FileSlice';
-import { useMemo } from 'react';
 function PendingFiles() {
   const [editing, setEditing] = useState(null);
-  const filter = { status: 'pending' };
+
   const dispatch = useDispatch();
   useEffect(() => {
-    dispatch(getFilesByFilter({ filter }));
-
-    return () => {
-      dispatch(clearFilteredFiles());
-    };
+    dispatch(getPendingFiles());
   }, [dispatch]);
 
-  const pendingFiles = useSelector((store) => store.files.filteredFiles) || null;
+  const pendingFiles = useSelector((store) => store.files.pendingFiles) || null;
 
   const handleChange = async (id, type) => {
     const swalWithBootstrapButtons = Swal.mixin({
@@ -77,50 +69,23 @@ function PendingFiles() {
     }
   };
 
-  const setData = useMemo(
-    () => ({
-      data: pendingFiles,
-      title: 'Onay Bekleyen Dosyalar',
-      actions: (row) => {
-        return (
-          <>
-            <DownloadButton fileId={row.original.id} filename={row.original.filename} />
-
-            <div className="btn-group" role="group" aria-label="Basic example">
-              <button
-                type="button"
-                className="btn btn-sm btn-warning"
-                onClick={() => handleChange(row.original.id, 'confirm')}
-              >
-                Yayınla
-              </button>
-              <button
-                type="button"
-                className="btn btn-sm btn-primary"
-                onClick={() => setEditing(row.original)}
-              >
-                Düzenle
-              </button>
-              <button
-                type="button"
-                className="btn btn-sm btn-danger"
-                onClick={() => handleChange(row.original.id, 'delete')}
-              >
-                Sil
-              </button>
-            </div>
-          </>
-        );
-      },
-    }),
-    [pendingFiles]
-  );
-  if (!pendingFiles || pendingFiles.length === 0) {
+  if (!pendingFiles) {
+    console.log(pendingFiles);
     return <div>Yükleniyor...</div>;
+  }
+  if (pendingFiles.length === 0) {
+    return (
+      <div className="alert alert-sm alert-danger text-center mt-4">Onay bekleyen dosya yok.</div>
+    );
   }
   return (
     <>
-      {setData.data.length != 0 && <DataTable data={setData}></DataTable>}
+      {pendingFiles.length !== 0 && (
+        <>
+          <h5 className="text-center mt-4">Onay Bekleyen Dosyalar</h5>
+          <DataTable pendingFiles={pendingFiles} handleChange={handleChange}></DataTable>
+        </>
+      )}
       <EditFileModal
         show={!!editing}
         onHide={() => setEditing(null)}

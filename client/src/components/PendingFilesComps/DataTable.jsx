@@ -1,10 +1,9 @@
 import React from 'react';
 import { useMemo } from 'react';
 import { MaterialReactTable, useMaterialReactTable } from 'material-react-table';
-
-const DataTable = ({ data }) => {
-  console.log('first');
-  console.log(data);
+import DownloadButton from '../../Utils/DownloadButton';
+const DataTable = ({ pendingFiles, handleChange }) => {
+  console.log('renderProblam');
   const columns = useMemo(
     () => [
       {
@@ -52,10 +51,40 @@ const DataTable = ({ data }) => {
 
   const table = useMaterialReactTable({
     columns,
-    data: data.data || [],
+    data: pendingFiles || [],
     enableRowActions: true,
     positionActionsColumn: 'last',
-    renderRowActions: ({ row }) => data.actions(row),
+    renderRowActions: ({ row }) => {
+      return (
+        <>
+          <DownloadButton fileId={row.original.id} filename={row.original.filename} />
+
+          <div className="btn-group" role="group" aria-label="Basic example">
+            <button
+              type="button"
+              className="btn btn-sm btn-warning"
+              onClick={() => handleChange(row.original.id, 'confirm')}
+            >
+              Yayınla
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-primary"
+              onClick={() => setEditing(row.original)}
+            >
+              Düzenle
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-danger"
+              onClick={() => handleChange(row.original.id, 'delete')}
+            >
+              Sil
+            </button>
+          </div>
+        </>
+      );
+    },
     initialState: {
       density: 'compact', //set default density to compact
       expanded: true, //expand all rows by default
@@ -70,7 +99,6 @@ const DataTable = ({ data }) => {
 
   return (
     <>
-      <h5 className="text-center mt-4">{data.title}</h5>
       <MaterialReactTable table={table} />
     </>
   );

@@ -3,6 +3,19 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { loginUser, getUsersAPI } from './api';
+function isTokenExpired(token) {
+  if (!token) return true;
+
+  try {
+    const payloadBase64 = token.split('.')[1];
+    const payload = JSON.parse(atob(payloadBase64));
+    const exp = payload.exp * 1000; // saniye → ms
+    return Date.now() > exp;
+  } catch (e) {
+    console.error('Geçersiz token:', e);
+    return true;
+  }
+}
 
 const initialState = {
   status: !!localStorage.getItem('user'),
@@ -65,6 +78,15 @@ export const UserSlice = createSlice({
       state.user = null;
       state.status = false;
     },
+    checkSession: (state) => {
+      const userData = JSON.parse(localStorage.getItem('user'));
+      const token = userData?.token;
+
+      if (!token || isTokenExpired(token)) {
+        localStorage.removeItem('user');
+        state.user = null;
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -108,6 +130,6 @@ export const UserSlice = createSlice({
 });
 
 // Action creators are generated for each case reducer function
-export const { clearSelectedUser, logoutUser } = UserSlice.actions;
+export const { clearSelectedUser, logoutUser, checkSession } = UserSlice.actions;
 
 export default UserSlice.reducer;

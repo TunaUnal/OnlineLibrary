@@ -6,12 +6,14 @@ import userRouter from "./routes/userRouter.js";
 import authRouter from "./routes/authRouter.js";
 import categoryRouter from "./routes/categoryRouter.js";
 import fileRouter from "./routes/fileRouter.js";
+import mainRouter from "./routes/mainRouter.js";
 import { connectDB } from "./config/db.js";
 import qs from "qs";
 app.use(
   cors({
     origin: "http://localhost:5173",
     credentials: true,
+    exposedHeaders: ["Content-Disposition"],
   })
 );
 
@@ -23,6 +25,7 @@ app.use("/user", userRouter);
 app.use("/auth", authRouter);
 app.use("/category", categoryRouter);
 app.use("/file", fileRouter);
+app.use("/main", mainRouter);
 
 app.get("/", (req, res) => {
   res.send("Hello World! 🌍");

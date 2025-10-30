@@ -1,11 +1,8 @@
 import FileModel from "../models/FileModel.js";
 import { Op } from "sequelize";
-
-const uploadFile = async (fileData) => {
-  //const file = await FileModel.create(fileData);
-  //return file;
-};
-
+import fs from "fs";
+import mime from "mime-types"; // Kütüphaneyi import et
+import path from "path";
 const getFileById = async (id) => {
   const file = await FileModel.findByPk(id);
   return file;
@@ -44,6 +41,7 @@ const getFilesByFilter = async (queryParams = {}) => {
   // Bu Sequelize'nin en güçlü fonksiyonlarından biridir.
   // Hem filtreye uyan kayıtları (rows) hem de o filtreye uyan TOPLAM kayıt sayısını (count)
   // tek bir veritabanı sorgusuyla verimli bir şekilde getirir.
+  console.log("Filter in service:", filter);
   const { count, rows } = await FileModel.findAndCountAll({
     where: filter, // URL'den gelen filtre objesi: { status: 'approved', user_id: '5' }
     limit: parsedLimit, // Sayfa başına kaç kayıt getirileceği
@@ -87,10 +85,52 @@ const changeFileStatus = async (id, status) => {
   return null;
 };
 
+const downloadFile = async (id) => {
+  const file = await FileModel.findByPk(id);
+  if (file) {
+    const filePath = file.path; // Dosyanın sunucudaki tam yolu
+
+    // Dosya uzantısından MIME türünü bul
+    const mimeType = mime.lookup(file.ext) || "application/octet-stream";
+
+    const fileStream = fs.createReadStream(filePath);
+
+    return {
+      stream: fileStream,
+      filename: `${file.filename}.${file.ext}`,
+      mimeType: mimeType, // MIME türünü de controller'a gönder
+    };
+  }
+  return null;
+};
+
+const uploadFile = async (user, file, body) => {
+  console.log(file);
+  const ext = path.extname(file.originalname).replace(".", ""); // ör: "pdf"
+  const userId = user.id;
+  const filename = body.filename;
+  const category_id = body.category_id;
+  const newFile = await FileModel.create({
+    filename: filename,
+    stored_name: file.filename,
+    ext: ext,
+    path: file.path,
+    size: file.size,
+    mimetype: file.mimetype,
+    user_id: userId,
+    uploaded_at: Date.now(),
+    category_id: category_id,
+  });
+
+  return newFile;
+};
+
 export default {
   uploadFile,
   getFileById,
   getFilesByFilter,
   updateFile,
   changeFileStatus,
+  downloadFile,
+  uploadFile,
 };

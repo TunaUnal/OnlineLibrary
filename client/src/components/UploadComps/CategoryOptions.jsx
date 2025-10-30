@@ -95,7 +95,7 @@ function CategoryOptions({
       <ul className="list-unstyled ms-2">
         {current.map((cat) => {
           const curPath = [...path, cat.name];
-          if (cat.can_upload === 1) {
+          if (cat.can_upload === true) {
             // seçilebilir (leaf)
             return (
               <li key={cat.id} className="my-1">

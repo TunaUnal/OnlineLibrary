@@ -83,6 +83,7 @@ export default function FileUploader() {
       {!file && (
         <>
           <input
+            name="file"
             type="file"
             className="form-control"
             onChange={handleFileChange}

@@ -1,16 +1,38 @@
 import Header from '../components/GeneralComponents/Header';
 import Sidebar from '../components/GeneralComponents/Sidebar';
 import Footer from '../components/GeneralComponents/Footer';
-import { useSelector } from 'react-redux';
-
+import { useDispatch, useSelector } from 'react-redux';
+import { use } from 'react';
+import { useEffect } from 'react';
+import { getDashboardData } from '../store/MainSlice';
 function Main() {
   const { user } = useSelector((state) => state.user);
+  const { dashboardData } = useSelector((state) => state.main);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(getDashboardData());
+  }, [dispatch]);
 
   // Widget verileri
   const widgets = [
-    { title: 'Belgeler', value: '4000+', icon: 'bi-file-earmark-text', color: 'primary' },
-    { title: 'Kullanıcılar', value: '80+', icon: 'bi-people', color: 'success' },
-    { title: 'Yüklediklerim', value: '12', icon: 'bi-upload', color: 'warning' },
+    {
+      title: 'Belgeler',
+      value: dashboardData?.totalFiles || '0',
+      icon: 'bi-file-earmark-text',
+      color: 'primary',
+    },
+    {
+      title: 'Kullanıcılar',
+      value: dashboardData?.totalUsers || '0',
+      icon: 'bi-people',
+      color: 'success',
+    },
+    {
+      title: 'Yüklediklerim',
+      value: dashboardData?.filesUploaded || '0',
+      icon: 'bi-upload',
+      color: 'warning',
+    },
     { title: 'İndirmeler', value: '87', icon: 'bi-download', color: 'danger' },
   ];
 
