@@ -9,6 +9,15 @@ import fileRouter from "./routes/fileRouter.js";
 import mainRouter from "./routes/mainRouter.js";
 import { connectDB } from "./config/db.js";
 import qs from "qs";
+import "./models/relations.js";
+app.use((req, res, next) => {
+  console.log("--- GLOBAL LOGGER ---");
+  console.log("İstek URL:", req.originalUrl); // Tam URL'i gösterir (? ile birlikte)
+  console.log("İstek Query:", req.query); // Bu noktadaki query objesini gösterir
+  console.log("---------------------");
+  next(); // İsteğin devam etmesini sağla
+});
+app.set("query parser", "extended");
 app.use(
   cors({
     origin: "http://localhost:5173",

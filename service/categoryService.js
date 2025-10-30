@@ -1,4 +1,4 @@
-import CategoryModel from "../models/categoryModel.js";
+import CategoryModel from "../models/CategoryModel.js";
 
 const getCategoryById = async (id) => {
   const category = await CategoryModel.findByPk(id);

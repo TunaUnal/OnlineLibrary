@@ -1,5 +1,5 @@
 import dotenv from "dotenv/config.js";
-import User from "../models/userModel.js";
+import User from "../models/UserModel.js";
 import jwt from "jsonwebtoken";
 const login = async (username, password) => {
   if (!username || !password) {
@@ -28,7 +28,7 @@ const login = async (username, password) => {
     id: user.id,
     username: user.username,
     role: user.role,
-    name: user.user_ns,
+    name: user.name,
     avatar: user.avatar,
     token: token,
   };

@@ -13,7 +13,6 @@ export const uploadFile = async (req, res) => {
 };
 
 export const getFileById = async (req, res) => {
-  console.log("gerFileById");
   const { id } = req.params;
   try {
     const file = await fileService.getFileById(id);
@@ -28,9 +27,17 @@ export const getFileById = async (req, res) => {
 };
 
 export const getFileByFilter = async (req, res) => {
-  const filters = req.params;
+  const { filter } = req.query;
+
+  console.log("filters1");
+  console.log(filter);
+  const options = {
+    includeUser: false,
+    includeCategory: false,
+    removeKeys: [],
+  };
   try {
-    const files = await fileService.getFilesByFilter(filters);
+    const files = await fileService.getFilesByFilter({ filter }, options);
     res.status(200).json(files);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -84,9 +91,14 @@ export const changeFileStatus = async (req, res) => {
 
 export const getPendingFiles = async (req, res) => {
   try {
-    const files = await fileService.getFilesByFilter({
-      filter: { status: "pending" },
-    });
+    const options = {
+      includeUser: true,
+      includeCategory: true,
+      removeKeys: [],
+    };
+    const filter = { status: "pending" };
+    console.log("filter2" + filter);
+    const files = await fileService.getFilesByFilter({ filter }, options);
     res.status(200).json({ ...files });
   } catch (error) {
     res.status(500).json({ message: error.message });

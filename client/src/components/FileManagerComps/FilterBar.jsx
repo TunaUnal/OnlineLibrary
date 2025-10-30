@@ -50,7 +50,7 @@ const FilterBar = ({ users = [], categories = [], onApplyFilters, isLoading }) =
             {console.log(users)}
             {users.map((user) => (
               <option key={user.id} value={user.id}>
-                {user.user_ns}
+                {user.name}
               </option>
             ))}
           </select>

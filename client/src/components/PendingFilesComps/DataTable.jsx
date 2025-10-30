@@ -17,8 +17,8 @@ const DataTable = ({ pendingFiles, handleChange }) => {
         size: 150,
       },
       {
-        accessorKey: 'category_path',
-        header: 'Dosya Yolu',
+        accessorKey: 'category_name',
+        header: 'Kategori',
         size: 150,
       },
       {
@@ -27,7 +27,7 @@ const DataTable = ({ pendingFiles, handleChange }) => {
         size: 150,
       },
       {
-        accessorKey: 'username',
+        accessorKey: 'user_name',
         header: 'Yükleyen',
         size: 150,
       },

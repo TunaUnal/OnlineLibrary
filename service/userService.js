@@ -1,5 +1,5 @@
 import dotenv from "dotenv/config.js";
-import User from "../models/userModel.js";
+import User from "../models/UserModel.js";
 export const printUserName = (id) => {
   const users = {
     1: "Alice",
@@ -16,7 +16,7 @@ export const printUserName = (id) => {
 export const getAllUserAPI = async () => {
   // Simüle edilmiş kullanıcı verisi
   const users = await User.findAll({
-    attributes: ["id", "username", "user_ns", "role", "avatar"],
+    attributes: ["id", "username", "name", "role", "avatar"],
   });
   return users;
 };

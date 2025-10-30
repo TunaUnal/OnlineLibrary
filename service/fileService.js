@@ -1,8 +1,15 @@
 import FileModel from "../models/FileModel.js";
+import UserModel from "../models/UserModel.js";
+import CategoryModel from "../models/CategoryModel.js";
 import { Op } from "sequelize";
 import fs from "fs";
 import mime from "mime-types"; // Kütüphaneyi import et
 import path from "path";
+import {
+  flattenSequelizeRelations,
+  excludeKeys,
+  pickKeys,
+} from "../utils/object.js";
 const getFileById = async (id) => {
   const file = await FileModel.findByPk(id);
   return file;
@@ -15,11 +22,8 @@ const getFileById = async (id) => {
  * @param {object} queryParams - Express'in req.query objesinden gelen parametreler.
  * @returns {object} - { data, pagination } formatında sonuçları döndürür.
  */
-const getFilesByFilter = async (queryParams = {}) => {
-  // 1. ADIM: Parametreleri Ayrıştırma ve Varsayılan Değerler Atama
 
-  // queryParams'tan gelen değerleri ayrıştırıyoruz.
-  // Eğer bir değer gelmezse, varsayılan değerleri (örn: page=1, limit=20) kullanıyoruz.
+const getFilesByFilter = async (queryParams = {}, options = {}) => {
   const {
     filter = {},
     page = 1,
@@ -28,28 +32,53 @@ const getFilesByFilter = async (queryParams = {}) => {
     order = "DESC",
   } = queryParams;
 
+  const {
+    includeUser = false,
+    includeCategory = false,
+    removeKeys = [],
+  } = options;
+
   // Gelen sayfa ve limit değerlerinin sayı olduğundan emin oluyoruz.
   const parsedPage = parseInt(page, 10);
   const parsedLimit = parseInt(limit, 10);
-
   // Sayfalama için 'offset' değerini hesaplıyoruz.
   // Örn: 2. sayfadaysan ve limit 20 ise, ilk 20 kaydı atlaman gerekir. offset = (2-1)*20 = 20.
   const offset = (parsedPage - 1) * parsedLimit;
 
-  // 2. ADIM: Sequelize ile Veritabanı Sorgusu
-
-  // Bu Sequelize'nin en güçlü fonksiyonlarından biridir.
-  // Hem filtreye uyan kayıtları (rows) hem de o filtreye uyan TOPLAM kayıt sayısını (count)
-  // tek bir veritabanı sorgusuyla verimli bir şekilde getirir.
-  console.log("Filter in service:", filter);
-  const { count, rows } = await FileModel.findAndCountAll({
+  const sequelizeQuery = {
     where: filter, // URL'den gelen filtre objesi: { status: 'approved', user_id: '5' }
     limit: parsedLimit, // Sayfa başına kaç kayıt getirileceği
     offset: offset, // Kaç kayıt atlanacağı
     order: [
       [sort, order], // Sıralama. örn: [['createdAt', 'DESC']]
     ],
-  });
+  };
+
+  if (includeUser) {
+    sequelizeQuery.include = [
+      {
+        model: UserModel,
+        as: "user", // Model tanımınızdaki ilişki adıyla eşleşmeli
+        attributes: ["name"], // Sadece istediğimiz alanları alalım
+      },
+    ];
+  }
+  if (includeCategory) {
+    sequelizeQuery.include += [
+      {
+        model: CategoryModel,
+        as: "category", // Model tanımınızdaki ilişki adıyla eşleşmeli
+        attributes: ["name"], // Sadece istediğimiz alanları alalım
+      },
+    ];
+  }
+
+  const { count, rows } = await FileModel.findAndCountAll(sequelizeQuery);
+
+  const flattenedData = excludeKeys(
+    flattenSequelizeRelations(rows),
+    removeKeys
+  );
 
   // 3. ADIM: Yanıt için Veriyi ve Sayfalama Bilgilerini Hazırlama
 
@@ -57,7 +86,7 @@ const getFilesByFilter = async (queryParams = {}) => {
   const totalPages = Math.ceil(count / parsedLimit);
 
   return {
-    data: rows, // O sayfadaki veriler
+    data: flattenedData, // O sayfadaki veriler
     pagination: {
       totalItems: count, // Filtreye uyan toplam öğe sayısı
       totalPages: totalPages, // Toplam sayfa sayısı

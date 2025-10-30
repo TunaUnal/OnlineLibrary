@@ -25,6 +25,12 @@ const File = sequelize.define(
   {
     tableName: "files",
     timestamps: false,
+    defaultScope: {
+      attributes: {
+        // 'path' ve 'stored_name' kolonlarını varsayılan olarak HARİÇ TUT
+        exclude: ["path", "stored_name"],
+      },
+    },
   }
 );
 

@@ -1,7 +1,7 @@
-import { User } from "./UserModel.js";
-import { Files } from "./FilesModel.js";
-import { Category } from "./CategoryModel.js";
-import { StarredCategory } from "./StarredCategoryModel.js";
+import User from "./UserModel.js";
+import Files from "./FileModel.js"; // Model dosyanızın adı 'FilesModel.js' ise
+import Category from "./CategoryModel.js";
+import StarredCategory from "./StarredCategoryModel.js";
 /*  
   1️⃣ User - Files
   Bir kullanıcı birçok dosya yükleyebilir.
